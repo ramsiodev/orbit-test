@@ -349,7 +349,7 @@ export default function GroupedAlertsTable() {
     category: [],
   };
 
-  const methods = useForm({
+  const methods = useForm<any>({
     mode: 'all',
     resolver: zodResolver(AlertasSchema),
     defaultValues,
