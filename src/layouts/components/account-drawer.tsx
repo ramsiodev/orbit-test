@@ -2,7 +2,7 @@
 
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useBoolean } from 'minimal-shared/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -22,7 +22,8 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { AnimateBorder } from 'src/components/animate';
 
-import { useMockedUser } from 'src/auth/hooks';
+// Importar el store de autenticación
+import useAuthStore from 'src/auth/store/authStore';
 
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';
@@ -39,24 +40,58 @@ export type AccountDrawerProps = IconButtonProps & {
 };
 
 export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
+  console.log('AccountDrawer: Renderizando componente');
+
   const pathname = usePathname();
 
-  const { user } = useMockedUser();
+  // Implementación manual del estado del drawer para más control
+  const [open, setOpen] = useState(false);
 
-  const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
+  // Usar el nuevo store de autenticación en lugar de useMockedUser
+  const { user, getUserInfo } = useAuthStore();
 
-  const renderAvatar = () => (
-    <AnimateBorder
-      sx={{ mb: 2, p: '6px', width: 96, height: 96, borderRadius: '50%' }}
-      slotProps={{
-        primaryBorder: { size: 120, sx: { color: 'primary.main' } },
-      }}
-    >
-      <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 1, height: 1 }}>
-        {user?.displayName?.charAt(0).toUpperCase()}
-      </Avatar>
-    </AnimateBorder>
-  );
+  // Memoizar el handler para abrir el drawer para evitar recreaciones
+  const onOpen = useCallback(() => {
+    console.log('AccountDrawer: Intentando abrir el drawer');
+    setOpen(true);
+  }, []);
+
+  // Memoizar el handler para cerrar el drawer
+  const onClose = useCallback(() => {
+    console.log('AccountDrawer: Cerrando drawer');
+    setOpen(false);
+  }, []);
+
+  // Al abrir el drawer, refrescar la información del usuario
+  useEffect(() => {
+    if (open) {
+      console.log('AccountDrawer: Drawer abierto, refrescando información de usuario');
+      getUserInfo();
+    }
+  }, [open, getUserInfo]);
+
+  // Mostrar el estado del drawer para debugging
+  useEffect(() => {
+    console.log('AccountDrawer: Estado del drawer:', open ? 'abierto' : 'cerrado');
+  }, [open]);
+
+  const renderAvatar = () => {
+    const displayName = user?.displayName || user?.name || '';
+    const photoURL = user?.photoURL || user?.picture || '';
+
+    return (
+      <AnimateBorder
+        sx={{ mb: 2, p: '6px', width: 96, height: 96, borderRadius: '50%' }}
+        slotProps={{
+          primaryBorder: { size: 120, sx: { color: 'primary.main' } },
+        }}
+      >
+        <Avatar src={photoURL} alt={displayName} sx={{ width: 1, height: 1 }}>
+          {displayName.charAt(0).toUpperCase()}
+        </Avatar>
+      </AnimateBorder>
+    );
+  };
 
   const renderList = () => (
     <MenuList
@@ -112,12 +147,18 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
     </MenuList>
   );
 
+  // Asegurar que tenemos valores por defecto para evitar errores de tipos
+  const userPhotoURL = user?.photoURL || user?.picture || '';
+  const userDisplayName = user?.displayName || user?.name || '';
+
+  console.log('AccountDrawer: Info de usuario:', { userDisplayName, userPhotoURL });
+
   return (
     <>
       <AccountButton
         onClick={onOpen}
-        photoURL={user?.photoURL}
-        displayName={user?.displayName}
+        photoURL={userPhotoURL}
+        displayName={userDisplayName}
         sx={sx}
         {...other}
       />
@@ -155,11 +196,11 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
             {renderAvatar()}
 
             <Typography variant="subtitle1" noWrap sx={{ mt: 2 }}>
-              {user?.displayName}
+              {userDisplayName}
             </Typography>
 
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }} noWrap>
-              {user?.email}
+              {user?.email || ''}
             </Typography>
           </Box>
 
@@ -199,7 +240,7 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
             </Tooltip>
           </Box> */}
 
-          {/* {renderList()} */}
+          {renderList()}
         </Scrollbar>
 
         <Box sx={{ p: 2.5 }}>

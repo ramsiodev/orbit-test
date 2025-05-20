@@ -18,12 +18,16 @@ import type { AlertItemProps } from './AlertCardItem';
 type AlertsCarouselProps = {
   title?: string;
   data: AlertItemProps[];
-  onViewAll?: () => void;
+  date?: string;
+  carouselId?: string;
+  onViewAll?: (data: AlertItemProps[], title: string, date?: string) => void;
 };
 
 export default function AlertsCarousel({
   title = 'Alertas',
   data,
+  date,
+  carouselId,
   onViewAll,
 }: AlertsCarouselProps) {
   const theme = useTheme();
@@ -37,7 +41,7 @@ export default function AlertsCarousel({
 
   const handleViewAll = () => {
     if (onViewAll) {
-      onViewAll();
+      onViewAll(data, title, date);
     }
   };
 

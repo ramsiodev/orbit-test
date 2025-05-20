@@ -1,9 +1,14 @@
+import type { SxProps } from '@mui/material';
+
 import { useTheme } from '@mui/material/styles';
 import { Box, Card, Chip, Stack, Button, Divider, Typography } from '@mui/material';
 
 import { fDateTime } from 'src/utils/format-time';
 
 import { Image } from 'src/components/image';
+
+import { useAlertsStore } from './store/useAlertsStore';
+import { usePurchaseConfirmDialog } from './hooks/usePurchaseConfirmDialog';
 
 // ----------------------------------------------------------------------
 
@@ -21,6 +26,8 @@ export type AlertItemProps = {
   icon: string;
   onViewMap?: () => void;
   onDownloadImage?: () => void;
+  showFullDetails?: boolean;
+  sx?: SxProps;
 };
 
 export default function AlertCardItem({
@@ -35,8 +42,13 @@ export default function AlertCardItem({
   imageUrl,
   onViewMap,
   onDownloadImage,
+  showFullDetails = false,
+  sx,
+  ...props
 }: AlertItemProps) {
   const theme = useTheme();
+  const { showAlertView } = useAlertsStore();
+  const { open: openPurchaseDialog } = usePurchaseConfirmDialog();
 
   const handleViewMap = () => {
     if (onViewMap) {
@@ -46,19 +58,56 @@ export default function AlertCardItem({
     }
   };
 
+  const handleDownloadImage = () => {
+    // Abrir el diálogo de confirmación
+    openPurchaseDialog(() => {
+      // Esta función se ejecutará al hacer clic en "Continuar"
+      if (onDownloadImage) {
+        onDownloadImage();
+      } else {
+        // Abrir la imagen en una nueva ventana como fallback
+        window.open(imageUrl, '_blank');
+      }
+    });
+  };
+
+  const handleViewDetails = () => {
+    showAlertView({
+      id: props.id,
+      title,
+      number,
+      type,
+      description,
+      detailedDescription,
+      date,
+      latitude,
+      longitude,
+      imageUrl,
+      icon: props.icon,
+    });
+  };
+
   return (
     <Card
       sx={{
         display: 'flex',
         backgroundColor: 'transparent',
         flexDirection: { xs: 'column', sm: 'row' },
-        height: 321,
+        height: showFullDetails ? 'auto' : 321,
         overflow: 'hidden',
         borderRadius: 2,
         gap: 2,
+        ...sx,
       }}
     >
-      <Box sx={{ width: { xs: '100%', sm: '60%' }, position: 'relative', borderRadius: 2 }}>
+      <Box
+        sx={{
+          width: { xs: '100%', sm: showFullDetails ? '50%' : '60%' },
+          position: 'relative',
+          borderRadius: 2,
+          minHeight: showFullDetails ? 300 : 'auto',
+        }}
+      >
         <Image alt={title} src={imageUrl} ratio="1/1" sx={{ height: '100%', borderRadius: 2 }} />
         <Box
           sx={{
@@ -66,14 +115,14 @@ export default function AlertCardItem({
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            bgcolor: 'error.main',
+            bgcolor: title === 'ALERTA' ? 'error.main' : 'warning.main',
             color: 'common.white',
             borderRadius: 1,
             px: 1,
             py: 0.5,
           }}
         >
-          <Typography variant="subtitle2">Alerta</Typography>
+          <Typography variant="subtitle2">{title}</Typography>
         </Box>
       </Box>
 
@@ -81,7 +130,7 @@ export default function AlertCardItem({
         sx={{
           borderRadius: 2,
           p: 2,
-          width: { xs: '100%', sm: '40%' },
+          width: { xs: '100%', sm: showFullDetails ? '50%' : '40%' },
           display: 'flex',
           backgroundColor: '#1C252E',
           flexDirection: 'column',
@@ -93,7 +142,12 @@ export default function AlertCardItem({
           </Typography>
         </Box>
 
-        <Chip label={type} color="error" size="small" sx={{ alignSelf: 'flex-start', mb: 2 }} />
+        <Chip
+          label={type}
+          color={title === 'ALERTA' ? 'error' : 'warning'}
+          size="small"
+          sx={{ alignSelf: 'flex-start', mb: 2 }}
+        />
 
         <Typography variant="body1" sx={{ mb: 1 }}>
           {description}
@@ -115,26 +169,35 @@ export default function AlertCardItem({
 
         <Divider />
 
-        <Stack direction="row" spacing={2} sx={{ mt: 'auto' }}>
-          <Button
-            variant="outlined"
-            // startIcon={<Iconify icon="solar:share-bold" />}
-            onClick={handleViewMap}
-            fullWidth
-            sx={{ height: 40 }}
-          >
+        <Stack
+          direction={showFullDetails ? { xs: 'column', sm: 'row' } : 'row'}
+          spacing={2}
+          sx={{ mt: 'auto', pt: 2 }}
+        >
+          <Button variant="outlined" onClick={handleViewMap} fullWidth sx={{ height: 40 }}>
             Ver en mapa
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            // startIcon={<Iconify icon="solar:export-bold" />}
-            onClick={onDownloadImage}
-            fullWidth
-            sx={{ height: 40 }}
-          >
-            Foto de alta calidad
-          </Button>
+          {showFullDetails ? (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleViewDetails}
+              fullWidth
+              sx={{ height: 40 }}
+            >
+              Ver detalles
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleDownloadImage}
+              fullWidth
+              sx={{ height: 40 }}
+            >
+              Foto de alta calidad
+            </Button>
+          )}
         </Stack>
       </Box>
     </Card>

@@ -5,6 +5,8 @@ import { fDateTime } from 'src/utils/format-time';
 
 import { Image } from 'src/components/image';
 
+import { usePurchaseConfirmDialog } from '../Alerts/hooks/usePurchaseConfirmDialog';
+
 // ----------------------------------------------------------------------
 
 export type AlertItemProps = {
@@ -37,6 +39,7 @@ export default function AlertCardItem({
   onDownloadImage,
 }: AlertItemProps) {
   const theme = useTheme();
+  const { open: openPurchaseDialog } = usePurchaseConfirmDialog();
 
   const handleViewMap = () => {
     if (onViewMap) {
@@ -44,6 +47,19 @@ export default function AlertCardItem({
     } else {
       window.open(`https://maps.google.com/?q=${latitude},${longitude}`, '_blank');
     }
+  };
+
+  const handleDownloadImage = () => {
+    // Abrir el diálogo de confirmación
+    openPurchaseDialog(() => {
+      // Esta función se ejecutará al hacer clic en "Continuar"
+      if (onDownloadImage) {
+        onDownloadImage();
+      } else {
+        // Abrir la imagen en una nueva ventana como fallback
+        window.open(imageUrl, '_blank');
+      }
+    });
   };
 
   return (
@@ -128,7 +144,7 @@ export default function AlertCardItem({
             variant="contained"
             color="primary"
             // startIcon={<Iconify icon="solar:export-bold" />}
-            onClick={onDownloadImage}
+            onClick={handleDownloadImage}
             fullWidth
             sx={{ height: 40 }}
           >

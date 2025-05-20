@@ -20,6 +20,9 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 
 import { CheckoutProvider } from 'src/sections/checkout/context';
 
+// Nuevo provider con Zustand
+import AuthProvider from 'src/auth/provider/auth-provider';
+// Antiguos providers, mantenidos por compatibilidad
 import { AuthProvider as JwtAuthProvider } from 'src/auth/context/jwt';
 import { AuthProvider as Auth0AuthProvider } from 'src/auth/context/auth0';
 import { AuthProvider as AmplifyAuthProvider } from 'src/auth/context/amplify';
@@ -28,7 +31,7 @@ import { AuthProvider as FirebaseAuthProvider } from 'src/auth/context/firebase'
 
 // ----------------------------------------------------------------------
 
-const AuthProvider =
+const OldAuthProvider =
   (CONFIG.auth.method === 'amplify' && AmplifyAuthProvider) ||
   (CONFIG.auth.method === 'firebase' && FirebaseAuthProvider) ||
   (CONFIG.auth.method === 'supabase' && SupabaseAuthProvider) ||
@@ -89,30 +92,34 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         />
 
         <I18nProvider lang={appConfig.i18nLang}>
-          <AuthProvider>
-            <SettingsProvider
-              defaultSettings={defaultSettings}
-              cookieSettings={appConfig.cookieSettings}
-            >
-              <LocalizationProvider>
-                <AppRouterCacheProvider options={{ key: 'css' }}>
-                  <ThemeProvider
-                    modeStorageKey={themeConfig.modeStorageKey}
-                    defaultMode={themeConfig.enableSystemMode ? 'system' : themeConfig.defaultMode}
-                  >
-                    <MotionLazy>
-                      <CheckoutProvider>
-                        <Snackbar />
-                        <ProgressBar />
-                        <SettingsDrawer defaultSettings={defaultSettings} />
-                        {children}
-                      </CheckoutProvider>
-                    </MotionLazy>
-                  </ThemeProvider>
-                </AppRouterCacheProvider>
-              </LocalizationProvider>
-            </SettingsProvider>
-          </AuthProvider>
+          <OldAuthProvider>
+            <AuthProvider>
+              <SettingsProvider
+                defaultSettings={defaultSettings}
+                cookieSettings={appConfig.cookieSettings}
+              >
+                <LocalizationProvider>
+                  <AppRouterCacheProvider options={{ key: 'css' }}>
+                    <ThemeProvider
+                      modeStorageKey={themeConfig.modeStorageKey}
+                      defaultMode={
+                        themeConfig.enableSystemMode ? 'system' : themeConfig.defaultMode
+                      }
+                    >
+                      <MotionLazy>
+                        <CheckoutProvider>
+                          <Snackbar />
+                          <ProgressBar />
+                          <SettingsDrawer defaultSettings={defaultSettings} />
+                          {children}
+                        </CheckoutProvider>
+                      </MotionLazy>
+                    </ThemeProvider>
+                  </AppRouterCacheProvider>
+                </LocalizationProvider>
+              </SettingsProvider>
+            </AuthProvider>
+          </OldAuthProvider>
         </I18nProvider>
       </body>
     </html>

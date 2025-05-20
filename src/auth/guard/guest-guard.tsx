@@ -8,7 +8,7 @@ import { CONFIG } from 'src/global-config';
 
 import { SplashScreen } from 'src/components/loading-screen';
 
-import { useAuthContext } from '../hooks';
+import useAuthStore from '../store/authStore';
 
 // ----------------------------------------------------------------------
 
@@ -19,32 +19,36 @@ type GuestGuardProps = {
 export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();
 
-  const { loading, authenticated } = useAuthContext();
-
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo') || CONFIG.auth.redirectPath;
 
   const [isChecking, setIsChecking] = useState(true);
 
-  const checkPermissions = async (): Promise<void> => {
-    if (loading) {
-      return;
-    }
-
-    if (authenticated) {
-      router.replace(returnTo);
-      return;
-    }
-
-    setIsChecking(false);
-  };
+  // Usar el nuevo store de autenticación
+  const { isAuthenticated, loading } = useAuthStore();
 
   useEffect(() => {
-    checkPermissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, loading]);
+    // Solo ejecutar una vez al montarse el componente
+    if (isChecking) {
+      console.log('GuestGuard - Verificando autenticación:', {
+        isAuthenticated,
+        loading,
+        returnTo,
+      });
 
-  if (isChecking) {
+      if (!loading) {
+        if (isAuthenticated) {
+          console.log('GuestGuard - Usuario autenticado, redirigiendo a:', returnTo);
+          router.replace(returnTo);
+        } else {
+          console.log('GuestGuard - Usuario no autenticado, mostrando hijos');
+          setIsChecking(false);
+        }
+      }
+    }
+  }, [isAuthenticated, loading, isChecking, returnTo, router]);
+
+  if (loading || (isChecking && isAuthenticated)) {
     return <SplashScreen />;
   }
 

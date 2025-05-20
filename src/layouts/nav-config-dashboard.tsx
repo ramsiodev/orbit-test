@@ -40,6 +40,7 @@ const ICONS = {
   dashboard: icon('ic-dashboard'),
   parameter: icon('ic-parameter'),
   dash: icon('ic-dash'),
+  alertas: icon('ic-alertas'),
 };
 
 // ----------------------------------------------------------------------
@@ -63,6 +64,38 @@ export const navData: NavSectionProps['data'] = [
    * Overview
    */
   {
-    items: [{ title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dash }],
+    items: [
+      { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dash },
+      {
+        title: 'Ordenes',
+        path: paths.dashboard.alerts.root,
+        icon: ICONS.alertas,
+      },
+    ],
+  },
+  {
+    subheader: 'Panel de control',
+    items: [
+      {
+        title: 'Contratar',
+        path: paths.dashboard.user.root,
+        icon: ICONS.external,
+      },
+      {
+        title: 'Planes',
+        path: paths.dashboard.user.root,
+        icon: ICONS.file,
+      },
+      {
+        title: 'Ajustes',
+        path: paths.dashboard.user.root,
+        icon: ICONS.external,
+      },
+      {
+        title: 'Ayuda',
+        path: paths.dashboard.user.root,
+        icon: ICONS.user,
+      },
+    ],
   },
 ];

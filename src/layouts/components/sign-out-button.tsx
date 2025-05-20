@@ -12,6 +12,7 @@ import { CONFIG } from 'src/global-config';
 import { toast } from 'src/components/snackbar';
 
 import { useAuthContext } from 'src/auth/hooks';
+import useAuthStore from 'src/auth/store/authStore';
 import { signOut as jwtSignOut } from 'src/auth/context/jwt/action';
 import { signOut as amplifySignOut } from 'src/auth/context/amplify/action';
 import { signOut as supabaseSignOut } from 'src/auth/context/supabase/action';
@@ -34,32 +35,42 @@ export function SignOutButton({ onClose, sx, ...other }: Props) {
 
   const { checkUserSession } = useAuthContext();
 
+  const { logout } = useAuthStore();
+
   const { logout: signOutAuth0 } = useAuth0();
 
   const handleLogout = useCallback(async () => {
     try {
-      await signOut();
-      await checkUserSession?.();
+      try {
+        await signOut();
+        await checkUserSession?.();
+      } catch (e) {
+        console.warn('Error en el signOut antiguo, usando el nuevo logout', e);
+      }
+
+      logout();
 
       onClose?.();
-      router.refresh();
+      router.replace('/auth/login');
     } catch (error) {
       console.error(error);
-      toast.error('Unable to logout!');
+      toast.error('¡No se pudo cerrar sesión!');
     }
-  }, [checkUserSession, onClose, router]);
+  }, [checkUserSession, logout, onClose, router]);
 
   const handleLogoutAuth0 = useCallback(async () => {
     try {
       await signOutAuth0();
 
+      logout();
+
       onClose?.();
-      router.refresh();
+      router.replace('/auth/login');
     } catch (error) {
       console.error(error);
-      toast.error('Unable to logout!');
+      toast.error('¡No se pudo cerrar sesión!');
     }
-  }, [onClose, router, signOutAuth0]);
+  }, [logout, onClose, router, signOutAuth0]);
 
   return (
     <Button
@@ -71,7 +82,7 @@ export function SignOutButton({ onClose, sx, ...other }: Props) {
       sx={sx}
       {...other}
     >
-      Logout
+      Cerrar sesión
     </Button>
   );
 }

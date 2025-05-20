@@ -9,7 +9,7 @@ import { CONFIG } from 'src/global-config';
 
 import { SplashScreen } from 'src/components/loading-screen';
 
-import { useAuthContext } from '../hooks';
+import useAuthStore from '../store/authStore';
 
 // ----------------------------------------------------------------------
 
@@ -28,41 +28,42 @@ const signInPaths = {
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-
-  const { authenticated, loading } = useAuthContext();
-
   const [isChecking, setIsChecking] = useState(true);
+
+  // Usar el nuevo store de autenticación
+  const { isAuthenticated, loading } = useAuthStore();
 
   const createRedirectPath = (currentPath: string) => {
     const queryString = new URLSearchParams({ returnTo: pathname }).toString();
     return `${currentPath}?${queryString}`;
   };
 
-  const checkPermissions = async (): Promise<void> => {
-    if (loading) {
-      return;
-    }
-
-    if (!authenticated) {
-      const { method } = CONFIG.auth;
-
-      const signInPath = signInPaths[method];
-      const redirectPath = createRedirectPath(signInPath);
-
-      router.replace(redirectPath);
-
-      return;
-    }
-
-    setIsChecking(false);
-  };
-
   useEffect(() => {
-    checkPermissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, loading]);
+    // Solo ejecutar una vez al montarse el componente
+    if (isChecking) {
+      console.log('AuthGuard - Verificando autenticación:', {
+        isAuthenticated,
+        loading,
+        pathname,
+      });
 
-  if (isChecking) {
+      if (!loading) {
+        if (!isAuthenticated) {
+          const { method } = CONFIG.auth;
+          const signInPath = signInPaths[method];
+          const redirectPath = createRedirectPath(signInPath);
+
+          console.log('AuthGuard - Usuario no autenticado, redirigiendo a:', redirectPath);
+          router.replace(redirectPath);
+        } else {
+          console.log('AuthGuard - Usuario autenticado, mostrando contenido protegido');
+          setIsChecking(false);
+        }
+      }
+    }
+  }, [isAuthenticated, loading, isChecking, pathname, router, createRedirectPath]);
+
+  if (loading || (isChecking && !isAuthenticated)) {
     return <SplashScreen />;
   }
 
