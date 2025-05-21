@@ -5,8 +5,6 @@ import { useState, useEffect } from 'react';
 import { paths } from 'src/routes/paths';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
-import { CONFIG } from 'src/global-config';
-
 import { SplashScreen } from 'src/components/loading-screen';
 
 import useAuthStore from '../store/authStore';
@@ -49,9 +47,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
       if (!loading) {
         if (!isAuthenticated) {
-          const { method } = CONFIG.auth;
-          const signInPath = signInPaths[method];
-          const redirectPath = createRedirectPath(signInPath);
+          const redirectPath = '/auth/login';
 
           console.log('AuthGuard - Usuario no autenticado, redirigiendo a:', redirectPath);
           router.replace(redirectPath);

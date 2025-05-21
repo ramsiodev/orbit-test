@@ -5,7 +5,7 @@ import { getStorage } from '../hooks/use-local-storage';
 export const createAxiosInstance = () => {
   const accessToken = getStorage('AUTH_TOKEN');
   const instance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || '',
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
@@ -52,7 +52,14 @@ export const endpoints = {
     logout: '/auth/logout',
   },
   user: {
-    profile: '/user/profile',
+    profile: '/auth/userinfo',
     updateProfile: '/user/profile',
+  },
+  subscription: {
+    findAll: '/subscription',
+    findById: (id: string) => `/subscription/${id}`,
+    create: '/subscription',
+    update: (id: string) => `/subscription/${id}`,
+    delete: (id: string) => `/subscription/${id}`,
   },
 };

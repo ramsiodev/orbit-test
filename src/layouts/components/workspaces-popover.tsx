@@ -2,9 +2,10 @@
 
 import type { Theme, SxProps } from '@mui/material/styles';
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
+import type { Subscription } from 'src/store/subscriptionStore';
 
-import { useState, useCallback } from 'react';
 import { usePopover } from 'minimal-shared/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
@@ -14,6 +15,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import ButtonBase from '@mui/material/ButtonBase';
 import Button, { buttonClasses } from '@mui/material/Button';
+
+import useSubscriptionStore from 'src/store/subscriptionStore';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -36,10 +39,51 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
 
   const { open, anchorEl, onClose, onOpen } = usePopover();
 
+  const { subscriptions, isLoading, fetchSubscriptions } = useSubscriptionStore();
+
+  const [subscriptionsData, setSubscriptionsData] = useState<
+    {
+      id: string;
+      name: string;
+      logo: string;
+      plan: string;
+    }[]
+  >([]);
+
+  // Convertir suscripciones al formato requerido
+  useEffect(() => {
+    const loadSubscriptions = async () => {
+      await fetchSubscriptions();
+    };
+
+    loadSubscriptions();
+  }, [fetchSubscriptions]);
+
+  // Transformar datos de suscripciones al formato requerido por el componente
+  useEffect(() => {
+    if (subscriptions && subscriptions.length > 0) {
+      const mappedData = subscriptions.map((subscription: Subscription) => ({
+        id: subscription.id,
+        name: subscription.name,
+        logo: '/assets/icons/polygon-icon.svg', // Logo por defecto
+        plan: subscription.billingCycle, // Usar el ciclo de facturación como "plan"
+      }));
+
+      setSubscriptionsData(mappedData);
+    }
+  }, [subscriptions]);
+
   const [workspace, setWorkspace] = useState(data[0]);
 
+  // Actualizar workspace seleccionado cuando se cargan las suscripciones
+  useEffect(() => {
+    if (subscriptionsData.length > 0 && !workspace) {
+      setWorkspace(subscriptionsData[0]);
+    }
+  }, [subscriptionsData, workspace]);
+
   const handleChangeWorkspace = useCallback(
-    (newValue: (typeof data)[0]) => {
+    (newValue: (typeof subscriptionsData)[0]) => {
       setWorkspace(newValue);
       onClose();
     },
@@ -66,6 +110,26 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
       visibility: 'visible',
     }),
   };
+
+  // Si está cargando, mostrar un mensaje de carga
+  if (isLoading && subscriptionsData.length === 0) {
+    return (
+      <ButtonBase
+        disabled
+        sx={[
+          {
+            py: 0.5,
+            gap: { xs: 0.5, [mediaQuery]: 1 },
+            '&::before': buttonBg,
+          },
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
+        {...other}
+      >
+        <Typography variant="subtitle2">Cargando...</Typography>
+      </ButtonBase>
+    );
+  }
 
   const renderButton = () => (
     <ButtonBase
@@ -96,7 +160,7 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
       </Box>
 
       <Label
-        color={workspace?.plan === 'Free' ? 'default' : 'info'}
+        color={workspace?.plan === 'MONTHLY' ? 'info' : 'success'}
         sx={{
           height: 22,
           cursor: 'inherit',
@@ -122,27 +186,33 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
     >
       <Scrollbar sx={{ maxHeight: 240 }}>
         <MenuList>
-          {data.map((option) => (
-            <MenuItem
-              key={option.id}
-              selected={option.id === workspace?.id}
-              onClick={() => handleChangeWorkspace(option)}
-              sx={{ height: 48 }}
-            >
-              <Avatar alt={option.name} src={option.logo} sx={{ width: 24, height: 24 }} />
-
-              <Typography
-                noWrap
-                component="span"
-                variant="body2"
-                sx={{ flexGrow: 1, fontWeight: 'fontWeightMedium' }}
+          {subscriptionsData.length > 0 ? (
+            subscriptionsData.map((option) => (
+              <MenuItem
+                key={option.id}
+                selected={option.id === workspace?.id}
+                onClick={() => handleChangeWorkspace(option)}
+                sx={{ height: 48 }}
               >
-                {option.name}
-              </Typography>
+                <Avatar alt={option.name} src={option.logo} sx={{ width: 24, height: 24 }} />
 
-              <Label color={option.plan === 'Free' ? 'default' : 'info'}>{option.plan}</Label>
+                <Typography
+                  noWrap
+                  component="span"
+                  variant="body2"
+                  sx={{ flexGrow: 1, fontWeight: 'fontWeightMedium' }}
+                >
+                  {option.name}
+                </Typography>
+
+                <Label color={option.plan === 'MONTHLY' ? 'info' : 'success'}>{option.plan}</Label>
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled sx={{ height: 48 }}>
+              <Typography variant="body2">No hay suscripciones disponibles</Typography>
             </MenuItem>
-          ))}
+          )}
         </MenuList>
       </Scrollbar>
 
@@ -168,7 +238,7 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
           },
         }}
       >
-        Create workspace
+        Crear suscripción
       </Button>
     </CustomPopover>
   );

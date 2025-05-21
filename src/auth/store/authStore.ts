@@ -43,16 +43,13 @@ const useAuthStore = create<AuthState>()(
           const isAuthenticated = get().isAuthenticated;
 
           if (!isAuthenticated) {
-            console.log('Saltando getUserInfo ya que no hay sesión activa');
             return null;
           }
 
-          console.log('Iniciando obtención de información de usuario...');
           set({ loading: true });
           const axiosInstance = createAxiosInstance();
 
-          console.log('Obteniendo información de usuario desde /auth/userinfo');
-          const response = await axiosInstance.get('/auth/userinfo');
+          const response = await axiosInstance.get(endpoints.user.profile);
 
           if (response.data) {
             const userInfo = response.data;
@@ -61,14 +58,11 @@ const useAuthStore = create<AuthState>()(
             userInfo.displayName = userInfo.name;
             userInfo.photoURL = userInfo.picture;
 
-            console.log('Usuario obtenido:', userInfo);
-
             set({
               user: userInfo,
               loading: false,
             });
 
-            console.log('Información del usuario actualizada:', userInfo);
             return userInfo;
           }
 

@@ -21,9 +21,9 @@ import type { ThemeOptions } from './types';
 export const baseTheme: ThemeOptions = {
   colorSchemes: {
     light: {
-      palette: palette.light,
-      shadows: shadows.light,
-      customShadows: customShadows.light,
+      palette: palette.dark,
+      shadows: shadows.dark,
+      customShadows: customShadows.dark,
     },
     dark: {
       palette: palette.dark,

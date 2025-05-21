@@ -88,7 +88,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <InitColorSchemeScript
           modeStorageKey={themeConfig.modeStorageKey}
           attribute={themeConfig.cssVariables.colorSchemeSelector}
-          defaultMode={themeConfig.enableSystemMode ? 'system' : themeConfig.defaultMode}
+          defaultMode="dark"
         />
 
         <I18nProvider lang={appConfig.i18nLang}>
@@ -100,12 +100,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
               >
                 <LocalizationProvider>
                   <AppRouterCacheProvider options={{ key: 'css' }}>
-                    <ThemeProvider
-                      modeStorageKey={themeConfig.modeStorageKey}
-                      defaultMode={
-                        themeConfig.enableSystemMode ? 'system' : themeConfig.defaultMode
-                      }
-                    >
+                    <ThemeProvider modeStorageKey={themeConfig.modeStorageKey} defaultMode="dark">
                       <MotionLazy>
                         <CheckoutProvider>
                           <Snackbar />
