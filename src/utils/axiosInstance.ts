@@ -57,6 +57,7 @@ export const endpoints = {
   },
   subscription: {
     findAll: '/subscription',
+    findStatus: '/polygon/status/:polygonId',
     findById: (id: string) => `/subscription/${id}`,
     create: '/subscription',
     update: (id: string) => `/subscription/${id}`,

@@ -4,8 +4,14 @@ import type { Theme } from '@emotion/react';
 import type { SxProps } from '@mui/material/styles';
 import type { MapProps } from 'react-map-gl/mapbox';
 
+import { useEffect } from 'react';
+
 import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
+
+import useSubscriptionStore from 'src/store/subscriptionStore';
+
+import { LoadingScreen } from 'src/components/loading-screen';
 
 import { MapHomeDash } from 'src/sections/_examples/extra/map-view/home-dash';
 import { FileDataActivity } from 'src/sections/file-manager/file-data-activity';
@@ -36,8 +42,32 @@ const mapStyles: SxProps<Theme> = {
 
 export function DashboardHomeView() {
   const { user } = useMockedUser();
-
   const theme = useTheme();
+
+  // Obtener el estado del polígono del store
+  const { polygonStatus, subscriptions, isLoading } = useSubscriptionStore();
+
+  // Si hay suscripciones pero no hay estado del polígono, consultar el estado
+  // del primer polígono disponible
+  useEffect(() => {
+    const fetchPolygonStatus = async () => {
+      const { findStatus } = useSubscriptionStore.getState();
+
+      if (subscriptions.length > 0 && !polygonStatus) {
+        const firstSubscription = subscriptions[0];
+        if (firstSubscription.polygonId) {
+          await findStatus(firstSubscription.polygonId);
+        }
+      }
+    };
+
+    fetchPolygonStatus();
+  }, [subscriptions, polygonStatus]);
+
+  // Mostrar pantalla de carga mientras se obtiene la información
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   // Datos personalizados para el historial de alarmas
   const alarmData = [
@@ -84,7 +114,7 @@ export function DashboardHomeView() {
         <HomeWidgetSummary
           title="Cambios en la zona"
           colorFigure={theme.vars.palette.primary.main}
-          total="8%"
+          total={polygonStatus ? `${polygonStatus.changePercentage}%` : '0%'}
           note="normal"
         />
       </Grid>
@@ -93,8 +123,11 @@ export function DashboardHomeView() {
         <HomeWidgetSummary
           title="Promedio mensual del terreno"
           colorFigure={theme.vars.palette.success.main}
-          total="Seguro"
-          numberDate={{ value: 3, description: 'alarmas totales en el mes' }}
+          total={polygonStatus?.averageStatusLabel || 'Sin datos'}
+          numberDate={{
+            value: polygonStatus?.monthlyTotalAlarms || 0,
+            description: 'alarmas totales en el mes',
+          }}
         />
       </Grid>
 
@@ -102,8 +135,11 @@ export function DashboardHomeView() {
         <HomeWidgetSummary
           title="Alarmas mensuales"
           colorFigure={theme.vars.palette.secondary.light}
-          numberDate={{ value: -0.5, description: '% mes pasado' }}
-          total="3"
+          numberDate={{
+            value: polygonStatus?.lastMonthChange || 0,
+            description: '% mes pasado',
+          }}
+          total={polygonStatus?.monthlyTotalAlarms?.toString() || '0'}
         />
       </Grid>
 
@@ -115,8 +151,11 @@ export function DashboardHomeView() {
         <HomeWidgetSummary
           title="Estado actual de tu terreno"
           colorFigure={theme.vars.palette.primary.main}
-          total="Seguro"
-          numberDate={{ value: 2.6, description: '% semana pasada' }}
+          total={polygonStatus?.isSafe ? 'Seguro' : 'Riesgoso'}
+          numberDate={{
+            value: polygonStatus?.weeklyChange || 0,
+            description: '% semana pasada',
+          }}
         />
       </Grid>
 
@@ -124,8 +163,11 @@ export function DashboardHomeView() {
         <HomeWidgetSummary
           title="Alarmas diarias"
           colorFigure={theme.vars.palette.success.main}
-          numberDate={{ value: 0, description: '% semana pasada' }}
-          total="0"
+          numberDate={{
+            value: 0,
+            description: '% semana pasada',
+          }}
+          total={polygonStatus?.dailyAlarms?.toString() || '0'}
         />
       </Grid>
 
@@ -134,7 +176,9 @@ export function DashboardHomeView() {
           title="Hectáreas del terreno"
           colorFigure={theme.vars.palette.secondary.light}
           numberDate={{ description: 'Analizadas por IA' }}
-          total="2,276 Hectáreas"
+          total={
+            polygonStatus ? `${polygonStatus.areaHectares.toFixed(2)} Hectáreas` : '0 Hectáreas'
+          }
         />
       </Grid>
 
@@ -191,7 +235,7 @@ export function DashboardHomeView() {
           sections={[
             {
               id: '1',
-              title: 'Sección 1',
+              title: 'Alarma 1',
               items: [
                 {
                   id: '1',
@@ -209,7 +253,7 @@ export function DashboardHomeView() {
             },
             {
               id: '2',
-              title: 'Sección 2',
+              title: 'Alarma 2',
               items: [
                 {
                   id: '1',
@@ -227,7 +271,7 @@ export function DashboardHomeView() {
             },
             {
               id: '3',
-              title: 'Sección 3',
+              title: 'Alarma 3',
               items: [
                 {
                   id: '1',

@@ -21,6 +21,18 @@ interface Properties {
   description?: string;
 }
 
+interface PolygonStatus {
+  isSafe: boolean;
+  changePercentage: number;
+  dailyAlarms: number;
+  weeklyChange: number;
+  monthlyAlarms: number;
+  lastMonthChange: number;
+  areaHectares: number;
+  averageStatusLabel: string;
+  monthlyTotalAlarms: number;
+}
+
 interface Polygon {
   id: string;
   name: string;
@@ -76,6 +88,7 @@ interface SubscriptionState {
   isLoading: boolean;
   error: string | null;
   selectedSubscription: Subscription | null;
+  polygonStatus: PolygonStatus | null;
 
   // Acciones
   setSelectedSubscription: (subscription: Subscription | null) => void;
@@ -88,6 +101,7 @@ interface SubscriptionState {
     params: UpdateSubscriptionParams
   ) => Promise<Subscription | null>;
   deleteSubscription: (id: string) => Promise<boolean>;
+  findStatus: (polygonId: string) => Promise<PolygonStatus | null>;
 }
 
 const useSubscriptionStore = create<SubscriptionState>()(
@@ -97,6 +111,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
       isLoading: false,
       error: null,
       selectedSubscription: null,
+      polygonStatus: null,
 
       setSelectedSubscription: (subscription: Subscription | null) => {
         set({ selectedSubscription: subscription });
@@ -232,13 +247,38 @@ const useSubscriptionStore = create<SubscriptionState>()(
           return false;
         }
       },
+
+      findStatus: async (polygonId: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const axiosInstance = createAxiosInstance();
+          const url = endpoints.subscription.findStatus.replace(':polygonId', polygonId);
+          const response = await axiosInstance.get(url);
+
+          set({
+            polygonStatus: response.data,
+            isLoading: false,
+          });
+
+          return response.data;
+        } catch (error: any) {
+          console.error(`Error al obtener estado del polígono con ID ${polygonId}:`, error);
+          set({
+            error:
+              error.response?.data?.message ||
+              `Error al obtener estado del polígono con ID ${polygonId}`,
+            isLoading: false,
+          });
+          return null;
+        }
+      },
     }),
     {
       name: 'subscription-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => {
         // Solo persistimos algunos datos, no el estado completo
-        const { isLoading, error, ...rest } = state;
+        const { isLoading, error, polygonStatus, ...rest } = state;
         return rest;
       },
     }
