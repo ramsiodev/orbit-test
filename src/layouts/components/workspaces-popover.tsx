@@ -40,7 +40,14 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
 
   const { open, anchorEl, onClose, onOpen } = usePopover();
 
-  const { subscriptions, isLoading, fetchSubscriptions, findStatus } = useSubscriptionStore();
+  const {
+    subscriptions,
+    isLoading,
+    fetchSubscriptions,
+    findStatus,
+    setSelectedSubscription,
+    fetchSubscriptionById,
+  } = useSubscriptionStore();
 
   const [subscriptionsData, setSubscriptionsData] = useState<
     {
@@ -114,17 +121,35 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
     async (newValue: (typeof subscriptionsData)[0]) => {
       setWorkspace(newValue);
 
-      // Buscar la suscripción completa para obtener el polygonId
-      const selectedSubscription = subscriptions.find((sub) => sub.id === newValue.id);
+      try {
+        console.log('🔍 Seleccionando servicio:', newValue.id);
 
-      if (selectedSubscription?.polygonId) {
-        // Consultar el estado del polígono
-        await findStatus(selectedSubscription.polygonId);
+        // Buscar la suscripción completa en los datos existentes
+        const existingSubscription = subscriptions.find((sub) => sub.id === newValue.id);
+
+        if (existingSubscription) {
+          console.log('✅ Suscripción encontrada en datos existentes:', existingSubscription);
+
+          // Establecer la suscripción seleccionada directamente desde los datos existentes
+          setSelectedSubscription(existingSubscription);
+
+          // Consultar el estado del polígono si tiene un polygonId
+          if (existingSubscription.polygonId) {
+            console.log('🔍 Consultando estado del polígono:', existingSubscription.polygonId);
+            await findStatus(existingSubscription.polygonId);
+          } else {
+            console.warn('⚠️ La suscripción no tiene polygonId:', existingSubscription);
+          }
+        } else {
+          console.error('❌ No se encontró la suscripción en los datos existentes');
+        }
+      } catch (error) {
+        console.error('❌ Error al seleccionar la suscripción:', error);
       }
 
       onClose();
     },
-    [onClose, subscriptions, findStatus]
+    [onClose, subscriptions, findStatus, setSelectedSubscription]
   );
 
   // Manejar cambios en el campo de búsqueda
