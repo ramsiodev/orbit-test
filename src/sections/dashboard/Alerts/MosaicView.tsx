@@ -1,180 +1,27 @@
+import type { AlertItem, AnalysisFilters } from 'src/store/alertsStore';
+
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useMemo, useState, useEffect } from 'react';
 
-import { Box, Stack, Button, MenuItem, Typography } from '@mui/material';
+import { Box, Stack, Button, MenuItem, Typography, Pagination } from '@mui/material';
+
+// Importar los stores
+import useAlertsStore from 'src/store/alertsStore';
+import useSubscriptionStore from 'src/store/subscriptionStore';
 
 import { Form, Field } from 'src/components/hook-form';
 
 import AlertsCarousel from './AlertsCarousel';
-// Importar el store de Zustand
-import { useAlertsStore } from './store/useAlertsStore';
 
 import type { AlertItemProps } from './AlertCardItem';
 
 // ----------------------------------------------------------------------
 
-// Datos de ejemplo para el carrusel
-const MOCK_ALERTS: AlertItemProps[] = [
-  {
-    id: '1',
-    title: 'ALERTA',
-    number: '31',
-    type: 'Detección cambio en camino',
-    description: 'Se ha registrado movimientos de personas en la zona',
-    detailedDescription:
-      'Aunque no se han identificado actividades sospechosas hasta el momento, se recomienda que permanezcan atentos.',
-    date: new Date('2024-01-20T11:23:00'),
-    latitude: '-34.0522',
-    longitude: '118.2437',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:bike',
-  },
-  {
-    id: '2',
-    title: 'ALERTA',
-    number: '32',
-    type: 'Movimiento inusual',
-    description: 'Detectado movimiento inusual en sector norte',
-    detailedDescription:
-      'Se ha detectado un patrón de movimiento fuera de lo común en el sector norte de la propiedad. Se recomienda verificar.',
-    date: new Date('2024-01-21T09:15:00'),
-    latitude: '-34.0580',
-    longitude: '118.2500',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:person',
-  },
-  {
-    id: '3',
-    title: 'ALERTA',
-    number: '33',
-    type: 'Cambio en vegetación',
-    description: 'Detección de cambio significativo en cultivo',
-    detailedDescription:
-      'El análisis satelital muestra un cambio abrupto en la coloración del cultivo del sector este que podría indicar problemas sanitarios.',
-    date: new Date('2024-01-22T14:30:00'),
-    latitude: '-34.0600',
-    longitude: '118.2200',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:road',
-  },
-  {
-    id: '4',
-    title: 'ALERTA',
-    number: '34',
-    type: 'Posible intrusión',
-    description: 'Detección de vehículo no autorizado',
-    detailedDescription:
-      'Se ha detectado un vehículo no registrado ingresando al perímetro sureste de la propiedad a las 02:15 am.',
-    date: new Date('2024-01-23T02:15:00'),
-    latitude: '-34.0510',
-    longitude: '118.2350',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:car',
-  },
-  // Nuevos elementos de ejemplo
-  {
-    id: '5',
-    title: 'ALERTA',
-    number: '35',
-    type: 'Cambio en vegetación',
-    description: 'Cambio en la vegetación detectado',
-    detailedDescription: 'Se ha detectado un cambio en la vegetación en el sector oeste.',
-    date: new Date('2024-01-24T10:00:00'),
-    latitude: '-34.0620',
-    longitude: '118.2400',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:tree',
-  },
-  {
-    id: '6',
-    title: 'ALERTA',
-    number: '36',
-    type: 'Movimiento inusual',
-    description: 'Movimiento inusual detectado',
-    detailedDescription: 'Se ha detectado un movimiento inusual en el sector sur.',
-    date: new Date('2024-01-25T15:45:00'),
-    latitude: '-34.0650',
-    longitude: '118.2450',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:run',
-  },
-  {
-    id: '7',
-    title: 'ALERTA',
-    number: '37',
-    type: 'Posible intrusión',
-    description: 'Posible intrusión detectada',
-    detailedDescription: 'Se ha detectado una posible intrusión en el sector norte.',
-    date: new Date('2024-01-26T18:30:00'),
-    latitude: '-34.0700',
-    longitude: '118.2500',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:alert',
-  },
-  // Alertas para fechas actuales (ayer, hoy, mañana)
-  {
-    id: '8',
-    title: 'ALERTA',
-    number: '38',
-    type: 'Detección cambio en camino',
-    description: 'Nuevo camino detectado en el límite de la propiedad',
-    detailedDescription:
-      'Se ha identificado la creación de un nuevo sendero en el límite este de la propiedad. Recomendamos revisión.',
-    date: new Date(new Date().setDate(new Date().getDate() - 1)), // Ayer
-    latitude: '-34.0680',
-    longitude: '118.2550',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:road-variant',
-  },
-  {
-    id: '9',
-    title: 'ALERTA',
-    number: '39',
-    type: 'Movimiento inusual',
-    description: 'Actividad sospechosa cerca del almacén',
-    detailedDescription:
-      'Movimientos no identificados detectados en las proximidades del almacén principal durante la noche.',
-    date: new Date(), // Hoy
-    latitude: '-34.0710',
-    longitude: '118.2580',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:account-alert',
-  },
-  {
-    id: '10',
-    title: 'ALERTA',
-    number: '39',
-    type: 'Movimiento inusual',
-    description: 'Actividad sospechosa cerca del almacén',
-    detailedDescription:
-      'Movimientos no identificados detectados en las proximidades del almacén principal durante la noche.',
-    date: new Date(), // Hoy
-    latitude: '-34.0710',
-    longitude: '118.2580',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:account-alert',
-  },
-  {
-    id: '11',
-    title: 'ALERTA',
-    number: '40',
-    type: 'Posible intrusión',
-    description: 'Alerta programada: mantenimiento de cercos',
-    detailedDescription:
-      'Recordatorio de revisión programada de cercos en el sector norte. Personal autorizado visitará la propiedad.',
-    date: new Date(new Date().setDate(new Date().getDate() + 1)), // Mañana
-    latitude: '-34.0730',
-    longitude: '118.2600',
-    imageUrl: '/assets/background/mockZone.png',
-    icon: 'mdi:fence',
-  },
-];
-
 export type AlertasSchemaType = zod.infer<typeof AlertasSchema>;
 
-// Modificar el esquema para permitir strings en dateStart y dateEnd
+// Esquema actualizado para trabajar con el API
 export const AlertasSchema = zod.object({
   dateStart: zod
     .union([zod.date(), zod.string()])
@@ -199,27 +46,20 @@ type FilterValues = {
   causa: string[];
 };
 
-const filterAlerts = (alerts: AlertItemProps[], filters: FilterValues): AlertItemProps[] => {
-  const { dateStart, dateEnd, category, causa } = filters;
-
-  return alerts.filter((alert) => {
-    // Filtrar por fecha
-    const alertDate = new Date(alert.date);
-    const isWithinDateRange =
-      (!dateStart || alertDate >= dateStart) && (!dateEnd || alertDate <= dateEnd);
-
-    // Filtrar por categoría
-    const matchesCategory =
-      !category.length ||
-      category.some((cat) => alert.type.toLowerCase().includes(cat.toLowerCase()));
-
-    // Filtrar por causa
-    const matchesCausa =
-      !causa.length || causa.some((c) => alert.type.toLowerCase().includes(c.toLowerCase()));
-
-    return isWithinDateRange && matchesCategory && matchesCausa;
-  });
-};
+// Función para transformar AlertItem a AlertItemProps para compatibilidad
+const transformAlertItemToProps = (alert: AlertItem): AlertItemProps => ({
+  id: alert.id,
+  title: alert.title === 'ALERT' ? 'ALERTA' : 'ADVERTENCIA',
+  number: alert.number,
+  type: alert.type,
+  description: alert.description,
+  detailedDescription: alert.detailedDescription,
+  date: alert.date,
+  latitude: alert.latitude,
+  longitude: alert.longitude,
+  imageUrl: alert.imageUrl || '/assets/background/mockZone.png',
+  icon: alert.icon || 'mdi:alert',
+});
 
 // Función para agrupar alertas por fecha
 const groupAlertsByDate = (alerts: AlertItemProps[]): Record<string, AlertItemProps[]> => {
@@ -247,17 +87,29 @@ const formatDateInSpanish = (dateString: string): string => {
 };
 
 const MosaicView = () => {
-  const alertsData = useMemo(() => MOCK_ALERTS, []);
-  const [filteredAlerts, setFilteredAlerts] = useState<AlertItemProps[]>(alertsData);
   const [groupedAlerts, setGroupedAlerts] = useState<Record<string, AlertItemProps[]>>({});
+  const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
   const [selectedAlerts, setSelectedAlerts] = useState<{
     data: AlertItemProps[];
     title: string;
     date?: string;
   } | null>(null);
 
-  // Obtener la acción showDetailView del store
-  const { showDetailView } = useAlertsStore();
+  // Stores
+  const {
+    alerts,
+    alarmTypes,
+    isLoading,
+    error,
+    pagination,
+    fetchAlarmTypes,
+    debouncedFetchAnalysisImages,
+    clearAlerts,
+    setPage,
+    cancelPendingRequests,
+  } = useAlertsStore();
+
+  const { selectedSubscription } = useSubscriptionStore();
 
   // Valores predeterminados del formulario
   const defaultValues: FilterValues = {
@@ -275,13 +127,16 @@ const MosaicView = () => {
 
   const { watch, reset, handleSubmit } = methods;
 
+  // Cargar tipos de alarma al montar el componente
+  useEffect(() => {
+    fetchAlarmTypes();
+  }, [fetchAlarmTypes]);
+
   // Procesar y convertir valores del formulario
   const processFormValues = (formValues: any): FilterValues => {
-    // Asegurar que las fechas sean objetos Date
     const dateStart = formValues.dateStart ? new Date(formValues.dateStart) : null;
     const dateEnd = formValues.dateEnd ? new Date(formValues.dateEnd) : null;
 
-    // Asegurar que category y causa sean arrays
     const category = Array.isArray(formValues.category)
       ? (formValues.category.filter(Boolean) as string[])
       : typeof formValues.category === 'string' && formValues.category
@@ -297,52 +152,144 @@ const MosaicView = () => {
     return { dateStart, dateEnd, category, causa };
   };
 
-  // Observar cambios en el formulario y actualizar los resultados filtrados
+  // Función para aplicar filtros y obtener datos del API
+  const applyFilters = async (
+    filters: FilterValues,
+    page: number = 1,
+    useDebounce: boolean = true
+  ) => {
+    if (!selectedSubscription?.polygonId) {
+      console.warn('No hay suscripción seleccionada');
+      return;
+    }
+
+    const apiFilters: AnalysisFilters = {
+      polygonId: selectedSubscription.polygonId,
+      page,
+      perPage: 20, // Configurar items por página
+    };
+
+    // Convertir fechas a string ISO si existen
+    if (filters.dateStart) {
+      apiFilters.createdStartDate = filters.dateStart.toISOString();
+    }
+    if (filters.dateEnd) {
+      apiFilters.createdEndDate = filters.dateEnd.toISOString();
+    }
+
+    // Convertir categorías (ALERT/WARNING) al formato del API
+    if (filters.category.length > 0) {
+      const categoryMapping: Record<string, 'ALERT' | 'WARNING'> = {
+        ALERTA: 'ALERT',
+        ADVERTENCIA: 'WARNING',
+      };
+      const mappedCategory = categoryMapping[filters.category[0]];
+      if (mappedCategory) {
+        apiFilters.level = mappedCategory;
+      }
+    }
+
+    // Convertir causas a alarmTypeId
+    if (filters.causa.length > 0) {
+      const selectedAlarmType = alarmTypes.find((type) =>
+        filters.causa.some((causa) => type.name === causa)
+      );
+      if (selectedAlarmType) {
+        apiFilters.alarmTypeId = selectedAlarmType.id;
+      }
+    }
+
+    setCurrentFilters(apiFilters);
+
+    // Usar debounce para cambios de formulario, fetch directo para paginación
+    if (useDebounce) {
+      await debouncedFetchAnalysisImages(apiFilters);
+    } else {
+      // Para casos donde no queremos debounce (como paginación)
+      const { fetchAnalysisImages } = useAlertsStore.getState();
+      await fetchAnalysisImages(apiFilters);
+    }
+  };
+
+  // Manejar cambio de página (sin debounce)
+  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+    if (currentFilters) {
+      setPage(page, currentFilters);
+    }
+  };
+
+  // Observar cambios en el formulario y actualizar los resultados
   useEffect(() => {
-    // Crear una suscripción para observar cambios en el formulario
     const subscription = watch((formValues) => {
       if (!formValues) return;
 
       const filters = processFormValues(formValues);
-
-      // Aplicar filtros y actualizar estado
-      const filtered = filterAlerts(alertsData, filters);
-      setFilteredAlerts(filtered);
-
-      // Agrupar por fecha
-      const grouped = groupAlertsByDate(filtered);
-      setGroupedAlerts(grouped);
+      applyFilters(filters, 1, true); // Con debounce para cambios de formulario
     });
 
-    // Iniciar filtro con valores actuales
-    const currentValues = methods.getValues();
-    const filters = processFormValues(currentValues);
+    // Aplicar filtros iniciales si hay una suscripción seleccionada
+    if (selectedSubscription?.polygonId && alarmTypes.length > 0) {
+      const currentValues = methods.getValues();
+      const filters = processFormValues(currentValues);
+      applyFilters(filters, 1, false); // Sin debounce para carga inicial
+    }
 
-    const filtered = filterAlerts(alertsData, filters);
-    setFilteredAlerts(filtered);
-
-    const grouped = groupAlertsByDate(filtered);
-    setGroupedAlerts(grouped);
-
-    // Limpiar suscripción al desmontar
     return () => subscription.unsubscribe();
-  }, [watch, alertsData]);
+  }, [watch, selectedSubscription?.polygonId, alarmTypes]);
+
+  // Actualizar grupos cuando cambian las alertas
+  useEffect(() => {
+    if (alerts.length > 0) {
+      const transformedAlerts = alerts.map(transformAlertItemToProps);
+      const grouped = groupAlertsByDate(transformedAlerts);
+      setGroupedAlerts(grouped);
+    } else {
+      setGroupedAlerts({});
+    }
+  }, [alerts]);
 
   const onSubmit = handleSubmit(async (data) => {
     console.info('Filtros aplicados:', data);
   });
 
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
+    console.log('🧹 Iniciando reset de filtros en MosaicView');
+
+    // 1. Cancelar cualquier request pendiente
+    cancelPendingRequests();
+
+    // 2. Limpiar estado de alertas
+    clearAlerts();
+
+    // 3. Resetear formulario
     reset(defaultValues);
+    setCurrentFilters(null);
+
+    // 4. Hacer nueva llamada con filtros limpios si hay una suscripción seleccionada
+    if (selectedSubscription?.polygonId) {
+      console.log('🔄 Cargando todas las alertas sin filtros');
+      await applyFilters(defaultValues, 1, false); // Sin debounce para reset
+    }
+
+    console.log('✅ Reset completado en MosaicView');
   };
 
   // Manejar el clic en "Ver todo" del carrusel
   const handleViewAll = (data: AlertItemProps[], title: string, date?: string) => {
     console.log('MosaicView: Iniciando vista detallada para:', title);
     console.log('MosaicView: Número de alertas:', data.length);
-
-    showDetailView(data, title, date);
+    // Aquí puedes implementar la lógica para mostrar la vista detallada
   };
+
+  if (!selectedSubscription) {
+    return (
+      <Box sx={{ mt: 2, p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="text.secondary">
+          Selecciona una suscripción para ver las alertas
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -352,18 +299,17 @@ const MosaicView = () => {
             <Field.DatePicker name="dateStart" label="Fecha inicio" />
             <Field.DatePicker name="dateEnd" label="Fecha fin" />
             <Field.Select name="category" label="Categoría">
-              <MenuItem value="Detección cambio en camino">Detección cambio en camino</MenuItem>
-              <MenuItem value="Movimiento inusual">Movimiento inusual</MenuItem>
-              <MenuItem value="Cambio en vegetación">Cambio en vegetación</MenuItem>
-              <MenuItem value="Posible intrusión">Posible intrusión</MenuItem>
+              <MenuItem value="ALERTA">Alerta</MenuItem>
+              <MenuItem value="ADVERTENCIA">Advertencia</MenuItem>
             </Field.Select>
             <Field.Select name="causa" label="Causa">
-              <MenuItem value="Detección cambio en camino">Detección cambio en camino</MenuItem>
-              <MenuItem value="Movimiento inusual">Movimiento inusual</MenuItem>
-              <MenuItem value="Cambio en vegetación">Cambio en vegetación</MenuItem>
-              <MenuItem value="Posible intrusión">Posible intrusión</MenuItem>
+              {alarmTypes.map((type) => (
+                <MenuItem key={type.id} value={type.name}>
+                  {type.name}
+                </MenuItem>
+              ))}
             </Field.Select>
-            <Button variant="contained" color="error" onClick={handleResetFilters}>
+            <Button variant="text" color="primary" onClick={handleResetFilters}>
               Limpiar Filtros
             </Button>
           </Stack>
@@ -371,18 +317,48 @@ const MosaicView = () => {
       </Box>
 
       <Box sx={{ py: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {Object.keys(groupedAlerts).length > 0 ? (
-          Object.entries(groupedAlerts)
-            .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
-            .map(([date, alerts]) => (
-              <AlertsCarousel
-                key={date}
-                title={`Alertas del ${formatDateInSpanish(date)}`}
-                data={alerts}
-                date={formatDateInSpanish(date)}
-                onViewAll={handleViewAll}
-              />
-            ))
+        {isLoading ? (
+          <Typography variant="h6" align="center" sx={{ py: 5 }}>
+            Cargando alertas...
+          </Typography>
+        ) : error ? (
+          <Typography variant="h6" align="center" color="error" sx={{ py: 5 }}>
+            Error: {error}
+          </Typography>
+        ) : Object.keys(groupedAlerts).length > 0 ? (
+          <>
+            {Object.entries(groupedAlerts)
+              .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+              .map(([date, alertsGroup]) => (
+                <AlertsCarousel
+                  key={date}
+                  title={`Alertas del ${formatDateInSpanish(date)}`}
+                  data={alertsGroup}
+                  date={formatDateInSpanish(date)}
+                  onViewAll={handleViewAll}
+                />
+              ))}
+
+            {/* Paginación */}
+            {pagination && pagination.lastPage > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                <Stack spacing={2} alignItems="center">
+                  <Typography variant="body2" color="text.secondary">
+                    Mostrando {alerts.length} de {pagination.total} alertas
+                  </Typography>
+                  <Pagination
+                    count={pagination.lastPage}
+                    page={pagination.currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                    showFirstButton
+                    showLastButton
+                  />
+                </Stack>
+              </Box>
+            )}
+          </>
         ) : (
           <Typography variant="h6" align="center" sx={{ py: 5 }}>
             No se encontraron alertas con los filtros seleccionados

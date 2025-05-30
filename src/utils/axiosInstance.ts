@@ -63,4 +63,8 @@ export const endpoints = {
     update: (id: string) => `/subscription/${id}`,
     delete: (id: string) => `/subscription/${id}`,
   },
+  alerts: {
+    alarmTypes: '/alarm-type',
+    analysisImage: '/analysis-image',
+  },
 };

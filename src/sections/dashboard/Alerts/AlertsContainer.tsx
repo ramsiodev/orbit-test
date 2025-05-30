@@ -1,12 +1,24 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+
+import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
+
+import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 import AlertView from './AlertView';
 import MosaicView from './MosaicView';
+import GroupedAlertsTable from './TableView';
 import AlertsDetailView from './AlertsDetailView';
 import { useAlertsStore } from './store/useAlertsStore';
 import PurchaseConfirmDialogProvider from './PurchaseConfirmDialogProvider';
 
 export default function AlertsContainer() {
+  const [currentRole, setCurrentRole] = useState<'Mosaico' | 'Listado'>('Mosaico');
+  const handleChangeRole = (
+    event: React.MouseEvent<HTMLElement>,
+    newRole: 'Mosaico' | 'Listado'
+  ) => {
+    setCurrentRole(newRole);
+  };
   // Obtener estado del store de Zustand
   const {
     view,
@@ -54,9 +66,47 @@ export default function AlertsContainer() {
 
     // Por defecto, mostrar la vista de mosaico
     console.log('AlertsContainer: Renderizando vista de mosaico');
-    return <MosaicView />;
+    return (
+      <>
+        {currentRole === 'Mosaico' && <MosaicView />}
+        {currentRole === 'Listado' && <GroupedAlertsTable />}
+      </>
+    );
   };
 
   // Envolver todo el contenido con el proveedor del diálogo
-  return <PurchaseConfirmDialogProvider>{renderContent()}</PurchaseConfirmDialogProvider>;
+  return (
+    <PurchaseConfirmDialogProvider>
+      <CustomBreadcrumbs
+        heading="Alertas y advertencias"
+        subheading="Todas las alarmas que tuviste recientemente están guardadas aquí."
+        action={
+          <Box
+            sx={{
+              gap: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ToggleButtonGroup
+              exclusive
+              value={currentRole}
+              size="small"
+              onChange={handleChangeRole}
+            >
+              <ToggleButton value="Mosaico" aria-label="Mosaico">
+                Mosaico
+              </ToggleButton>
+              <ToggleButton value="Listado" aria-label="Listado">
+                Listado
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+        }
+      />
+
+      {renderContent()}
+    </PurchaseConfirmDialogProvider>
+  );
 }
