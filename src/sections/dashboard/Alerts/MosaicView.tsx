@@ -14,6 +14,7 @@ import useSubscriptionStore from 'src/store/subscriptionStore';
 import { Form, Field } from 'src/components/hook-form';
 
 import AlertsCarousel from './AlertsCarousel';
+import { useAlertsStore as useAlertsViewStore } from './store/useAlertsStore';
 
 import type { AlertItemProps } from './AlertCardItem';
 
@@ -110,6 +111,7 @@ const MosaicView = () => {
   } = useAlertsStore();
 
   const { selectedSubscription } = useSubscriptionStore();
+  const { showDetailView } = useAlertsViewStore();
 
   // Valores predeterminados del formulario
   const defaultValues: FilterValues = {
@@ -237,7 +239,6 @@ const MosaicView = () => {
     return () => subscription.unsubscribe();
   }, [watch, selectedSubscription?.polygonId, alarmTypes]);
 
-  // Actualizar grupos cuando cambian las alertas
   useEffect(() => {
     if (alerts.length > 0) {
       const transformedAlerts = alerts.map(transformAlertItemToProps);
@@ -253,32 +254,20 @@ const MosaicView = () => {
   });
 
   const handleResetFilters = async () => {
-    console.log('🧹 Iniciando reset de filtros en MosaicView');
-
-    // 1. Cancelar cualquier request pendiente
     cancelPendingRequests();
 
-    // 2. Limpiar estado de alertas
     clearAlerts();
 
-    // 3. Resetear formulario
     reset(defaultValues);
     setCurrentFilters(null);
 
-    // 4. Hacer nueva llamada con filtros limpios si hay una suscripción seleccionada
     if (selectedSubscription?.polygonId) {
-      console.log('🔄 Cargando todas las alertas sin filtros');
       await applyFilters(defaultValues, 1, false); // Sin debounce para reset
     }
-
-    console.log('✅ Reset completado en MosaicView');
   };
 
-  // Manejar el clic en "Ver todo" del carrusel
   const handleViewAll = (data: AlertItemProps[], title: string, date?: string) => {
-    console.log('MosaicView: Iniciando vista detallada para:', title);
-    console.log('MosaicView: Número de alertas:', data.length);
-    // Aquí puedes implementar la lógica para mostrar la vista detallada
+    showDetailView(data, title, date);
   };
 
   if (!selectedSubscription) {

@@ -46,7 +46,7 @@ const DashboardView: React.FC = () => {
             variant={active === item.label ? 'soft' : 'text'}
             color={active === item.label ? 'primary' : 'inherit'}
             onClick={() => setActive(item.label)}
-            sx={{ height: '44px', pl: 4, pr: 4, minWidth: 'fit-content' }}
+            sx={{ height: '44px', pl: 2, pr: 2, minWidth: 'fit-content', fontSize: '14px' }}
             startIcon={<SvgColor src={item.Icon} />}
           >
             {item.label}

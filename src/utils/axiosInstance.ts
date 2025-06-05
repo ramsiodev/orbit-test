@@ -66,5 +66,6 @@ export const endpoints = {
   alerts: {
     alarmTypes: '/alarm-type',
     analysisImage: '/analysis-image',
+    chart: '/alarm/chart/:polygonId/:mode',
   },
 };

@@ -109,21 +109,6 @@ export default function AlertCardItem({
         }}
       >
         <Image alt={title} src={imageUrl} ratio="1/1" sx={{ height: '100%', borderRadius: 2 }} />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: title === 'ALERTA' ? 'error.main' : 'warning.main',
-            color: 'common.white',
-            borderRadius: 1,
-            px: 1,
-            py: 0.5,
-          }}
-        >
-          <Typography variant="subtitle2">{title}</Typography>
-        </Box>
       </Box>
 
       <Box

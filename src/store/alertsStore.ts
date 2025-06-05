@@ -43,6 +43,27 @@ export interface PaginationMeta {
   next: number | null;
 }
 
+// Nuevas interfaces para el chart
+export interface ChartData {
+  name: string;
+  data: number[];
+}
+
+export interface ChartSeries {
+  name: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+  categories: string[];
+  data: ChartData[];
+}
+
+export interface AlarmChartResponse {
+  title: string;
+  chart: {
+    series: ChartSeries[];
+  };
+}
+
+export type ChartMode = 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+
 interface AlertsState {
   // Estados
   alarmTypes: AlarmType[];
@@ -51,6 +72,9 @@ interface AlertsState {
   error: string | null;
   pagination: PaginationMeta | null;
   lastRequestId: string | null;
+  // Nuevo estado para chart
+  chartData: AlarmChartResponse | null;
+  isLoadingChart: boolean;
 
   // Acciones
   setError: (error: string | null) => void;
@@ -61,6 +85,8 @@ interface AlertsState {
   setPage: (page: number, filters: AnalysisFilters) => Promise<void>;
   cancelPendingRequests: () => void;
   resetAndClear: () => void;
+  // Nueva acción para chart
+  fetchAlarmChart: (polygonId: string, mode: ChartMode) => Promise<AlarmChartResponse | null>;
 }
 
 // Variables globales para manejo de debounce y cancelación
@@ -75,6 +101,9 @@ const useAlertsStore = create<AlertsState>((set, get) => ({
   error: null,
   pagination: null,
   lastRequestId: null,
+  // Nuevo estado para chart
+  chartData: null,
+  isLoadingChart: false,
 
   setError: (error: string | null) => {
     set({ error });
@@ -189,9 +218,9 @@ const useAlertsStore = create<AlertsState>((set, get) => ({
               type: 'Tipo desconocido', // Necesitaremos mapear esto con alarmTypes
               description: alarm.description || 'Sin descripción',
               detailedDescription: alarm.description || 'Sin descripción detallada',
-              date: new Date(alarm.createdAt || analysis.analysisDate),
-              latitude: '0', // No disponible en la respuesta actual
-              longitude: '0', // No disponible en la respuesta actual
+              date: new Date(alarm.createdAt),
+              latitude: alarm.latitude,
+              longitude: alarm.longitude,
               imageUrl:
                 alarm.urlImage || analysis.resultImageUrl || '/assets/background/mockZone.png',
               icon: 'mdi:alert',
@@ -299,6 +328,32 @@ const useAlertsStore = create<AlertsState>((set, get) => ({
       error: null,
       lastRequestId: null,
     });
+  },
+
+  // Nueva acción para chart
+  fetchAlarmChart: async (polygonId: string, mode: ChartMode) => {
+    set({ isLoadingChart: true, error: null });
+    try {
+      const axiosInstance = createAxiosInstance();
+      // Reemplazar los parámetros en la URL
+      const url = endpoints.alerts.chart.replace(':polygonId', polygonId).replace(':mode', mode);
+
+      const response = await axiosInstance.get(url);
+
+      set({
+        chartData: response.data,
+        isLoadingChart: false,
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Error al obtener gráfico de alarmas:', error);
+      set({
+        error: error.response?.data?.message || 'Error al obtener gráfico de alarmas',
+        isLoadingChart: false,
+      });
+      return null;
+    }
   },
 }));
 

@@ -1,8 +1,8 @@
 import { z as zod } from 'zod';
 import { Icon } from '@iconify/react';
-// GroupedAlertsTable.tsx
-import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+// GroupedAlertsTable.tsx
+import { useMemo, useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
@@ -13,10 +13,10 @@ import {
   Paper,
   Stack,
   Table,
+  Button,
   Checkbox,
   Collapse,
   TableRow,
-  MenuItem,
   TableBody,
   TableCell,
   IconButton,
@@ -28,14 +28,24 @@ import {
 import { Image } from 'src/components/image';
 import { Form, Field } from 'src/components/hook-form';
 
-import { AlertasSchema } from '../Alerts/MosaicView';
-
 import type { AlertItemProps } from './AlertCardItem';
 
-const alertasSchema = zod.object({
-  date: zod.date().nullable(),
-  category: zod.array(zod.string()),
+// Esquema de filtros de fecha (similar a MosaicView)
+const HistoricalFiltersSchema = zod.object({
+  dateStart: zod
+    .union([zod.date(), zod.string()])
+    .nullable()
+    .transform((val) => (val ? new Date(val) : null)),
+  dateEnd: zod
+    .union([zod.date(), zod.string()])
+    .nullable()
+    .transform((val) => (val ? new Date(val) : null)),
 });
+
+type FilterValues = {
+  dateStart: Date | null;
+  dateEnd: Date | null;
+};
 
 // Datos de ejemplo para la tabla
 const MOCK_ALERTS: AlertItemProps[] = [
@@ -314,6 +324,61 @@ function GroupRow({ label, alerts }: { label: string; alerts: AlertItemProps[] }
 /* ---------- tabla principal ---------- */
 
 export default function GroupedAlertsTable() {
+  const [filteredAlerts, setFilteredAlerts] = useState<AlertItemProps[]>(MOCK_ALERTS);
+
+  // Valores predeterminados del formulario
+  const defaultValues: FilterValues = {
+    dateStart: null,
+    dateEnd: null,
+  };
+
+  const methods = useForm<FilterValues>({
+    mode: 'onChange',
+    resolver: zodResolver(HistoricalFiltersSchema),
+    defaultValues,
+  });
+
+  const { watch, reset, handleSubmit } = methods;
+
+  // Función para filtrar alertas por rango de fechas
+  const filterAlertsByDate = (
+    alerts: AlertItemProps[],
+    startDate: Date | null,
+    endDate: Date | null
+  ): AlertItemProps[] => {
+    if (!startDate && !endDate) return alerts;
+
+    return alerts.filter((alert) => {
+      const alertDate = new Date(alert.date);
+
+      if (startDate && alertDate < startDate) return false;
+      if (endDate && alertDate > endDate) return false;
+
+      return true;
+    });
+  };
+
+  // Procesar y convertir valores del formulario
+  const processFormValues = (formValues: any): FilterValues => {
+    const dateStart = formValues.dateStart ? new Date(formValues.dateStart) : null;
+    const dateEnd = formValues.dateEnd ? new Date(formValues.dateEnd) : null;
+
+    return { dateStart, dateEnd };
+  };
+
+  // Observar cambios en el formulario y filtrar alertas
+  useEffect(() => {
+    const subscription = watch((formValues) => {
+      if (!formValues) return;
+
+      const filters = processFormValues(formValues);
+      const filtered = filterAlertsByDate(MOCK_ALERTS, filters.dateStart, filters.dateEnd);
+      setFilteredAlerts(filtered);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
   // agrupar por HOY / AYER / fecha
   const grouped = useMemo(() => {
     const today = new Date();
@@ -325,14 +390,14 @@ export default function GroupedAlertsTable() {
         year: '2-digit',
       });
 
-    return MOCK_ALERTS.reduce<Record<string, AlertItemProps[]>>((acc, a) => {
+    return filteredAlerts.reduce<Record<string, AlertItemProps[]>>((acc, a) => {
       const key =
         fmt(a.date) === fmt(today) ? 'HOY' : fmt(a.date) === fmt(yesterday) ? 'AYER' : fmt(a.date);
       acc[key] ||= [];
       acc[key].push(a);
       return acc;
     }, {});
-  }, []);
+  }, [filteredAlerts]);
 
   /* ——— tema oscuro local (puedes omitir si ya tienes theme global) ——— */
   const dark = createTheme({
@@ -344,22 +409,11 @@ export default function GroupedAlertsTable() {
     typography: { fontFamily: 'Inter, sans-serif' },
   });
 
-  const defaultValues = {
-    date: null,
-    category: [],
+  // Función para manejar el reset de filtros
+  const handleResetFilters = () => {
+    reset(defaultValues);
+    setFilteredAlerts(MOCK_ALERTS);
   };
-
-  const methods = useForm<any>({
-    mode: 'all',
-    resolver: zodResolver(AlertasSchema),
-    defaultValues,
-  });
-
-  const {
-    reset,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -375,12 +429,12 @@ export default function GroupedAlertsTable() {
     <Box sx={{ mt: 3 }}>
       <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
         <Form methods={methods} onSubmit={onSubmit}>
-          <Stack direction="row" spacing={2}>
-            <Field.DatePicker name="date" />
-            <Field.Select name="Estado" label="Estado">
-              <MenuItem value="advertencia">Advertencia</MenuItem>
-              <MenuItem value="alerta">Alerta</MenuItem>
-            </Field.Select>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+            <Field.DatePicker name="dateStart" label="Fecha inicio" />
+            <Field.DatePicker name="dateEnd" label="Fecha fin" />
+            <Button variant="text" color="primary" onClick={handleResetFilters}>
+              Limpiar Filtros
+            </Button>
           </Stack>
         </Form>
       </Grid>

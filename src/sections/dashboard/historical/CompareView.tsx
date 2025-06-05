@@ -1,6 +1,6 @@
 import ReactCompareImage from 'react-compare-image';
 
-import { Box, useTheme } from '@mui/material';
+import { Box, styled, useTheme } from '@mui/material';
 
 type ImageCompareProps = {
   title?: string;
@@ -9,6 +9,30 @@ type ImageCompareProps = {
   leftLabel?: string;
   rightLabel?: string;
 };
+
+// Contenedor con estilos mejorados
+const CompareContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  margin: '0 auto',
+  marginTop: theme.spacing(3),
+  borderRadius: theme.shape.borderRadius * 2,
+  overflow: 'hidden',
+  boxShadow: theme.shadows[8],
+  background: theme.palette.grey[900],
+  '& .react-compare-image': {
+    borderRadius: 'inherit',
+    overflow: 'hidden',
+    '& img': {
+      objectFit: 'cover',
+      borderRadius: 'inherit',
+      maxHeight: 500,
+      transition: 'transform 0.3s ease',
+      '&:hover': {
+        transform: 'scale(1.02)',
+      },
+    },
+  },
+}));
 
 export default function ImageCompare({
   title = 'Comparación de Imágenes',
@@ -25,7 +49,7 @@ export default function ImageCompare({
   const safeRight = rightImage || placeholder;
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 900 /* opcional */, mx: 'auto', mt: 3 }}>
+    <CompareContainer>
       <ReactCompareImage
         leftImage={safeLeft}
         rightImage={safeRight}
@@ -33,12 +57,48 @@ export default function ImageCompare({
         rightImageAlt={rightLabel}
         leftImageLabel={leftLabel}
         rightImageLabel={rightLabel}
-        sliderLineWidth={2}
-        sliderLineColor={theme.palette.primary.main}
-        handleSize={40}
+        sliderLineWidth={10}
+        sliderLineColor="rgba(145, 158, 171, 0.47)"
+        handleSize={50}
+        handle={
+          <Box
+            sx={{
+              width: 50,
+              height: 50,
+              borderRadius: '50%',
+              background: `rgba(145, 158, 171, 0.20)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'ew-resize',
+              boxShadow: theme.shadows[12],
+              border: `0px solid ${theme.palette.common.white}`,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+                boxShadow: theme.shadows[16],
+              },
+              '&:before, &:after': {
+                content: '""',
+                position: 'absolute',
+                width: 0,
+                height: 0,
+                border: '8px solid transparent',
+              },
+              '&:before': {
+                borderRight: `8px solid ${theme.palette.common.white}`,
+                transform: 'translateX(-12px)',
+              },
+              '&:after': {
+                borderLeft: `8px solid ${theme.palette.common.white}`,
+                transform: 'translateX(12px)',
+              },
+            }}
+          />
+        }
         // El slider arranca al 50 %
         sliderPositionPercentage={0.5}
       />
-    </Box>
+    </CompareContainer>
   );
 }

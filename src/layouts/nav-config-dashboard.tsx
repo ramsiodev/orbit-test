@@ -68,7 +68,7 @@ export const navData: NavSectionProps['data'] = [
       { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dash },
       {
         title: 'Ordenes',
-        path: paths.dashboard.alerts.root,
+        path: paths.dashboard.orders,
         icon: ICONS.alertas,
       },
     ],

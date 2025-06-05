@@ -73,7 +73,11 @@ export function NavItem({
 
       {title && (
         <ItemTexts {...ownerState} className={navSectionClasses.item.texts} sx={slotProps?.texts}>
-          <ItemTitle {...ownerState} className={navSectionClasses.item.title} sx={slotProps?.title}>
+          <ItemTitle
+            {...ownerState}
+            className={navSectionClasses.item.title}
+            sx={{ ...slotProps?.title, color: '#FFF' }}
+          >
             {title}
           </ItemTitle>
 
