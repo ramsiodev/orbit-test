@@ -78,22 +78,22 @@ export const navData: NavSectionProps['data'] = [
     items: [
       {
         title: 'Contratar',
-        path: paths.dashboard.user.root,
+        path: 'https://www.whatsapp.com',
         icon: ICONS.external,
       },
       {
         title: 'Planes',
-        path: paths.dashboard.user.root,
+        path: 'https://www.whatsapp.com',
         icon: ICONS.file,
       },
       {
         title: 'Ajustes',
-        path: paths.dashboard.user.root,
+        path: paths.dashboard.user.account,
         icon: ICONS.external,
       },
       {
         title: 'Ayuda',
-        path: paths.dashboard.user.root,
+        path: 'https://www.whatsapp.com',
         icon: ICONS.user,
       },
     ],
