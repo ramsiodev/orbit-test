@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
-import useAuthStore from '../store/authStore';
+import useAuthStore from '../../store/authStore';
 
 // ----------------------------------------------------------------------
 

@@ -18,10 +18,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { useRouter } from 'src/routes/hooks';
 
+import useAuthStore from 'src/store/authStore';
+
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
-
-import useAuthStore from 'src/auth/store/authStore';
 
 // ----------------------------------------------------------------------
 

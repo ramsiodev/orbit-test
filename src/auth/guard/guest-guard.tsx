@@ -8,7 +8,7 @@ import { CONFIG } from 'src/global-config';
 
 import { SplashScreen } from 'src/components/loading-screen';
 
-import useAuthStore from '../store/authStore';
+import useAuthStore from '../../store/authStore';
 
 // ----------------------------------------------------------------------
 

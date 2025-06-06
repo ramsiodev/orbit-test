@@ -8,11 +8,11 @@ import Button from '@mui/material/Button';
 import { useRouter } from 'src/routes/hooks';
 
 import { CONFIG } from 'src/global-config';
+import useAuthStore from 'src/store/authStore';
 
 import { toast } from 'src/components/snackbar';
 
 import { useAuthContext } from 'src/auth/hooks';
-import useAuthStore from 'src/auth/store/authStore';
 import { signOut as jwtSignOut } from 'src/auth/context/jwt/action';
 import { signOut as amplifySignOut } from 'src/auth/context/amplify/action';
 import { signOut as supabaseSignOut } from 'src/auth/context/supabase/action';

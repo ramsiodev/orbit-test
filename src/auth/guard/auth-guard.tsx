@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { SplashScreen } from 'src/components/loading-screen';
 
-import useAuthStore from '../store/authStore';
+import useAuthStore from '../../store/authStore';
 
 // ----------------------------------------------------------------------
 

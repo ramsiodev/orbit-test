@@ -12,12 +12,12 @@ import IconButton from '@mui/material/IconButton';
 
 import { usePathname } from 'src/routes/hooks';
 
+// Importar el store de autenticación
+import useAuthStore from 'src/store/authStore';
+
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { AnimateBorder } from 'src/components/animate';
-
-// Importar el store de autenticación
-import useAuthStore from 'src/auth/store/authStore';
 
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';

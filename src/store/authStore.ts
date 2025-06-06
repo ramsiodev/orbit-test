@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-import { setStorage } from '../../hooks/use-local-storage';
-import { endpoints, createAxiosInstance } from '../../utils/axiosInstance';
+import { setStorage } from '../hooks/use-local-storage';
+import { endpoints, createAxiosInstance } from '../utils/axiosInstance';
 
 interface AuthUser {
   sub?: string;
@@ -14,6 +14,15 @@ interface AuthUser {
   updated_at?: string;
   displayName?: string; // Alias para name para compatibilidad
   photoURL?: string; // Alias para picture para compatibilidad
+  // Campos adicionales para el perfil completo
+  phoneNumber?: string;
+  country?: string;
+  address?: string;
+  state?: string;
+  city?: string;
+  zipCode?: string;
+  about?: string;
+  isPublic?: boolean;
 }
 
 interface AuthState {
@@ -30,6 +39,7 @@ interface AuthState {
   checkAuth: () => boolean;
   fetchUserProfile: () => Promise<void>;
   getUserInfo: () => Promise<void>;
+  updateUserProfile: (userData: Partial<AuthUser>) => void;
 }
 
 // Crear una instancia de store con funciones memoizadas
@@ -58,8 +68,17 @@ const useAuthStore = create<AuthState>()(
             userInfo.displayName = userInfo.name;
             userInfo.photoURL = userInfo.picture;
 
+            // Preservar campos existentes del perfil si ya están presentes
+            const currentUser = get().user;
+            const mergedUser = {
+              ...currentUser,
+              ...userInfo,
+              displayName: userInfo.name || currentUser?.displayName,
+              photoURL: userInfo.picture || currentUser?.photoURL,
+            };
+
             set({
-              user: userInfo,
+              user: mergedUser,
               loading: false,
             });
 
@@ -182,6 +201,15 @@ const useAuthStore = create<AuthState>()(
         checkAuth: () => {
           const { isAuthenticated } = get();
           return isAuthenticated;
+        },
+
+        updateUserProfile: (userData: Partial<AuthUser>) => {
+          const currentUser = get().user;
+          const updatedUser = {
+            ...currentUser,
+            ...userData,
+          };
+          set({ user: updatedUser });
         },
       };
     },

@@ -12,10 +12,10 @@ import Typography from '@mui/material/Typography';
 
 import { fData } from 'src/utils/format-number';
 
+import useAuthStore from 'src/store/authStore';
+
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
-
-import { useMockedUser } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -45,20 +45,20 @@ export const UpdateUserSchema = zod.object({
 // ----------------------------------------------------------------------
 
 export function AccountGeneral() {
-  const { user } = useMockedUser();
+  const { user, updateUserProfile } = useAuthStore();
 
   const currentUser: UpdateUserSchemaType = {
-    displayName: user?.displayName,
-    email: user?.email,
-    photoURL: user?.photoURL,
-    phoneNumber: user?.phoneNumber,
-    country: user?.country,
-    address: user?.address,
-    state: user?.state,
-    city: user?.city,
-    zipCode: user?.zipCode,
-    about: user?.about,
-    isPublic: user?.isPublic,
+    displayName: user?.displayName || user?.name || '',
+    email: user?.email || '',
+    photoURL: user?.photoURL || user?.picture || null,
+    phoneNumber: user?.phoneNumber || '',
+    country: user?.country || null,
+    address: user?.address || '',
+    state: user?.state || '',
+    city: user?.city || '',
+    zipCode: user?.zipCode || '',
+    about: user?.about || '',
+    isPublic: user?.isPublic || false,
   };
 
   const defaultValues: UpdateUserSchemaType = {
@@ -90,10 +90,37 @@ export function AccountGeneral() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      toast.success('Update success!');
-      console.info('DATA', data);
+
+      // Actualizar el store del usuario con los nuevos datos
+      updateUserProfile({
+        displayName: data.displayName,
+        name: data.displayName, // También actualizar el campo name para consistencia
+        email: data.email,
+        photoURL: data.photoURL
+          ? typeof data.photoURL === 'string'
+            ? data.photoURL
+            : undefined
+          : undefined,
+        picture: data.photoURL
+          ? typeof data.photoURL === 'string'
+            ? data.photoURL
+            : undefined
+          : undefined,
+        phoneNumber: data.phoneNumber || undefined,
+        country: data.country || undefined,
+        address: data.address,
+        state: data.state,
+        city: data.city,
+        zipCode: data.zipCode,
+        about: data.about,
+        isPublic: data.isPublic,
+      });
+
+      toast.success('¡Perfil actualizado con éxito!');
+      console.info('Datos actualizados:', data);
     } catch (error) {
       console.error(error);
+      toast.error('Error al actualizar el perfil');
     }
   });
 
